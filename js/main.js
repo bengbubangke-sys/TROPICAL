@@ -15,6 +15,18 @@ navItems.forEach(item => {
         const targetId = item.getAttribute('href');
         const targetSection = document.querySelector(targetId);
         
+        // 如果是点击首页链接，显示所有版块但隐藏购物车和结账版块
+        if (targetId === '#home') {
+            const allSections = document.querySelectorAll('section');
+            allSections.forEach(section => {
+                if (section.id !== 'cart' && section.id !== 'checkout') {
+                    section.style.display = 'block';
+                } else {
+                    section.style.display = 'none';
+                }
+            });
+        }
+        
         window.scrollTo({
             top: targetSection.offsetTop - 70,
             behavior: 'smooth'
@@ -150,14 +162,18 @@ function switchLanguage(lang) {
                 // 对于表单元素，更新placeholder属性
                 element.placeholder = languages[lang][key];
             } else {
-                // 对于其他元素，更新文本内容
-                element.textContent = languages[lang][key];
+                // 对于其他元素，更新内容（支持HTML格式）
+                element.innerHTML = languages[lang][key];
             }
         }
     });
     
     // 更新页面标题
     document.title = `Tropical Penguin - ${lang === 'zh' ? '数字化AI解决方案' : 'Digital AI Solutions'}`;
+    
+    // 更新购物车和结账页面的内容（确保动态生成的内容也能正确翻译）
+    updatePricingCards();
+    updateCartDisplay();
     
     // 保存用户语言偏好到本地存储
     localStorage.setItem('preferredLanguage', lang);
@@ -315,8 +331,26 @@ document.addEventListener('DOMContentLoaded', () => {
         updateCartDisplay();
         
         // 显示添加成功提示
-        const add_to_cart_success = currentLang === 'zh' ? `${name} 已成功加入购物车！` : `${name} has been successfully added to cart!`;
-        alert(add_to_cart_success);
+        const successMsg = languages[currentLang]['cart_add_success'].replace('{name}', name);
+        alert(successMsg);
+        
+        // 显示购物车版块并隐藏其他所有版块
+        const cartSection = document.getElementById('cart');
+        const allSections = document.querySelectorAll('section');
+        
+        // 隐藏所有版块
+        allSections.forEach(section => {
+            section.style.display = 'none';
+        });
+        
+        // 显示购物车版块
+        cartSection.style.display = 'block';
+        
+        // 滚动到购物车版块
+        window.scrollTo({
+            top: cartSection.offsetTop - 70,
+            behavior: 'smooth'
+        });
     }
     
     // 为加入购物车按钮添加事件监听器
@@ -332,6 +366,61 @@ document.addEventListener('DOMContentLoaded', () => {
     // 初始金额显示
     updatePricingCards();
     updateCartDisplay();
+    
+    // 为"继续选购"按钮添加事件监听器
+    const continueShoppingBtn = document.querySelector('a[data-lang="continue_shopping"]');
+    if (continueShoppingBtn) {
+        continueShoppingBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            
+            // 显示所有版块
+            const allSections = document.querySelectorAll('section');
+            allSections.forEach(section => {
+                section.style.display = 'block';
+            });
+            
+            // 隐藏购物车和结账版块
+            const cartSection = document.getElementById('cart');
+            const checkoutSection = document.getElementById('checkout');
+            cartSection.style.display = 'none';
+            checkoutSection.style.display = 'none';
+            
+            // 滚动到服务版块
+            const servicesSection = document.getElementById('services');
+            if (servicesSection) {
+                window.scrollTo({
+                    top: servicesSection.offsetTop - 70,
+                    behavior: 'smooth'
+                });
+            }
+        });
+    }
+    
+    // 为"去结账"按钮添加事件监听器
+    const goToCheckoutBtn = document.querySelector('a[data-lang="go_to_checkout"]');
+    if (goToCheckoutBtn) {
+        goToCheckoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            
+            // 显示结账版块并隐藏其他所有版块
+            const checkoutSection = document.getElementById('checkout');
+            const allSections = document.querySelectorAll('section');
+            
+            // 隐藏所有版块
+            allSections.forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            // 显示结账版块
+            checkoutSection.style.display = 'block';
+            
+            // 滚动到结账版块
+            window.scrollTo({
+                top: checkoutSection.offsetTop - 70,
+                behavior: 'smooth'
+            });
+        });
+    }
     
     // 付款方式选择的JavaScript备选方案（针对不支持:has()选择器的浏览器）
     const paymentLabels = document.querySelectorAll('.payment-options label');
@@ -364,30 +453,36 @@ document.addEventListener('DOMContentLoaded', () => {
         const name = document.getElementById('customerName')?.value.trim();
         const email = document.getElementById('customerEmail')?.value.trim();
         const phone = document.getElementById('customerPhone')?.value.trim();
-        const eta = document.getElementById('deliveryEta')?.value.trim();
         const refund = document.getElementById('refundPolicy')?.checked;
         const terms = document.getElementById('termsPolicy')?.checked;
         const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || 'FPX';
 
         if (!name || !email || !phone) {
-            alert('请完整填写 Full Name / Email / Phone');
+            alert(languages[currentLang]['checkout_missing_fields']);
             return;
         }
         if (!refund || !terms) {
-            alert('请勾选并同意 Refund Policy 与 Terms & Privacy');
+            alert(languages[currentLang]['checkout_agree_terms']);
             return;
         }
 
         const summaryTotal = document.getElementById('summaryTotal')?.textContent || '';
-        const message = `
+        // 构建结账确认消息（可进一步优化为使用翻译键）
+        const message = currentLang === 'zh' ? `
 最终确认：
 - 姓名：${name}
 - 邮箱：${email}
 - 电话：${phone}
-- 交付时间：${eta}
 - 付款方式：${paymentMethod}
 - 应付金额：${summaryTotal}
-确认后将跳转至支付渠道。`;
+确认后将跳转至支付渠道。` : `
+Final Confirmation:
+- Name: ${name}
+- Email: ${email}
+- Phone: ${phone}
+- Payment Method: ${paymentMethod}
+- Total Amount: ${summaryTotal}
+After confirmation, you will be redirected to the payment channel.`;
         alert(message);
     });
 });
