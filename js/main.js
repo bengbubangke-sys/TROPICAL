@@ -14,17 +14,24 @@ navItems.forEach(item => {
         e.preventDefault();
         const targetId = item.getAttribute('href');
         const targetSection = document.querySelector(targetId);
+        const allSections = document.querySelectorAll('section');
         
-        // 如果是点击首页链接，显示所有版块但隐藏购物车和结账版块
+        // 隐藏所有版块
+        allSections.forEach(section => {
+            section.style.display = 'none';
+        });
+        
+        // 根据不同的目标链接显示对应的版块
         if (targetId === '#home') {
-            const allSections = document.querySelectorAll('section');
+            // 如果是首页，显示所有非购物车和非结账的版块
             allSections.forEach(section => {
                 if (section.id !== 'cart' && section.id !== 'checkout') {
                     section.style.display = 'block';
-                } else {
-                    section.style.display = 'none';
                 }
             });
+        } else {
+            // 其他链接，只显示目标版块
+            targetSection.style.display = 'block';
         }
         
         window.scrollTo({
